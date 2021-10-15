@@ -1,0 +1,815 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "RUPURU API",
+    "version": "0.0.1"
+  },
+  "servers": [
+    {
+      "url": "http://api.rupu.ru",
+      "description": "rust api server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "calls",
+      "description": "Операции над звонками"
+    },
+    {
+      "name": "tinkoff"
+    }
+  ],
+  "paths": {
+    "/tinkoff/Receipt": {
+      "post": {
+        "tags": [
+          "tinkoff"
+        ],
+        "operationId": "SendClosingReceipt",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ReqTinkoffSendClosingReceipt"
+        },
+        "responses": {
+          "200": {
+            "description": "Array of errors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_200"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/call/callback": {
+      "post": {
+        "tags": [
+          "calls"
+        ],
+        "summary": "Перезвонить",
+        "operationId": "Callback",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/reqcallback"
+        },
+        "responses": {
+          "200": {
+            "description": "Описание",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_200_1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/call/add": {
+      "post": {
+        "tags": [
+          "calls"
+        ],
+        "summary": "Создает новый звонок",
+        "operationId": "CreateNewCall",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/reqcallnew201"
+        },
+        "responses": {
+          "201": {
+            "description": "Какое-то описание",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_201"
+                }
+              }
+            },
+            "links": {
+              "GetCallId": {
+                "operationId": "CreateNewCallMaked",
+                "parameters": {
+                  "call_id": "$response.body#/call_id",
+                  "doer_phones_id": "$response.body#/doers[*]/doer_phones_id"
+                }
+              },
+              "UpdCallComplite": {
+                "operationId": "UpdateCallComplite",
+                "parameters": {
+                  "call_id": "$response.body#/call_id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Array of errors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_500"
+                },
+                "examples": {
+                  "sample1": {
+                    "value": {
+                      "code": 1,
+                      "message": "All the performers are talking"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/call/in/maked": {
+      "post": {
+        "tags": [
+          "calls"
+        ],
+        "summary": "ГОВНО, не нужное Обновляет информацию о входящем звонке",
+        "operationId": "CreateNewCallMaked",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/reqCallInMaked"
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/call/complite": {
+      "post": {
+        "tags": [
+          "calls"
+        ],
+        "summary": "Звонок успешно завершен",
+        "operationId": "UpdateCallComplite",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/reqCallComplite"
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/v2/Init": {
+      "post": {
+        "tags": [
+          "tinkoff"
+        ],
+        "description": "Метод создает платеж: продавец получает ссылку на платежную форму и должен перенаправить по ней покупателя",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ReqTinkoff_Init"
+        },
+        "responses": {
+          "200": {
+            "description": "ответ от init",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tinkoff_Init_Response"
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://securepay.tinkoff.ru"
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Tinkoff_Payments": {
+        "type": "object",
+        "properties": {
+          "electronic": {
+            "type": "number",
+            "example": 5000
+          },
+          "cash": {
+            "type": "number",
+            "example": 0
+          },
+          "advancePayment": {
+            "type": "number",
+            "example": 5000
+          },
+          "credit": {
+            "type": "number",
+            "example": 0
+          },
+          "provision": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "description": "Платежи"
+      },
+      "Tinkoff_Init_Response": {
+        "required": [
+          "Amount",
+          "ErrorCode",
+          "OrderId",
+          "PaymentId",
+          "Success",
+          "TerminalKey"
+        ],
+        "type": "object",
+        "properties": {
+          "TerminalKey": {
+            "maxLength": 20,
+            "type": "string",
+            "example": "TinkoffBankTest"
+          },
+          "Amount": {
+            "maxLength": 10,
+            "type": "number",
+            "example": 100000
+          },
+          "OrderId": {
+            "maxLength": 36,
+            "type": "string",
+            "example": "21050"
+          },
+          "Success": {
+            "type": "boolean"
+          },
+          "Status": {
+            "maxLength": 20,
+            "type": "string",
+            "example": "NEW"
+          },
+          "PaymentId": {
+            "maxLength": 20,
+            "type": "number",
+            "example": 13660
+          },
+          "ErrorCode": {
+            "maxLength": 20,
+            "type": "string",
+            "example": "0"
+          },
+          "PaymentURL": {
+            "maxLength": 100,
+            "type": "string",
+            "example": "https://securepay.tinkoff.ru/rest/Authorize/1B63Y1"
+          },
+          "Message": {
+            "type": "string"
+          },
+          "Details": {
+            "type": "string"
+          }
+        },
+        "description": "Ответ на Init"
+      },
+      "Tinkoff_Items": {
+        "type": "object",
+        "properties": {
+          "AgentData": {
+            "$ref": "#/components/schemas/Tinkoff_Items_AgentData"
+          },
+          "SupplierInfo": {
+            "$ref": "#/components/schemas/Tinkoff_Items_SupplierInfo"
+          },
+          "Name": {
+            "type": "string",
+            "example": "Название товара 1"
+          },
+          "Price": {
+            "type": "number",
+            "example": 10000
+          },
+          "Quantity": {
+            "type": "number",
+            "example": 1
+          },
+          "Amount": {
+            "type": "number",
+            "example": 10000
+          },
+          "Tax": {
+            "type": "string",
+            "example": "none",
+            "enum": [
+              "none",
+              "vat0",
+              "vat10",
+              "vat20",
+              "vat110",
+              "vat120"
+            ]
+          },
+          "PaymentMethod": {
+            "type": "string",
+            "example": "full_prepayment",
+            "enum": [
+              "full_payment",
+              "full_prepayment",
+              "prepayment",
+              "advance",
+              "partial_payment",
+              "credit",
+              "credit_payment"
+            ]
+          },
+          "PaymentObject": {
+            "type": "string",
+            "example": "payment",
+            "enum": [
+              "commodity",
+              "excise",
+              "job",
+              "service",
+              "gambling_bet",
+              "gambling_prize",
+              "lottery",
+              "lottery_prize",
+              "intellectual_activity",
+              "payment",
+              "agent_commission",
+              "composite",
+              "another"
+            ]
+          }
+        }
+      },
+      "Tinkoff_Receipt": {
+        "type": "object",
+        "properties": {
+          "Email": {
+            "type": "string",
+            "example": "test@tinkoff.ru"
+          },
+          "Taxation": {
+            "type": "string",
+            "example": "usn_income",
+            "enum": [
+              "osn",
+              "usn_income",
+              "usn_income_outcome",
+              "patent",
+              "envd",
+              "esn"
+            ]
+          },
+          "Payments": {
+            "$ref": "#/components/schemas/Tinkoff_Payments"
+          },
+          "Items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tinkoff_Items"
+            }
+          }
+        }
+      },
+      "inline_response_200": {
+        "type": "object",
+        "properties": {
+          "Success": {
+            "type": "boolean"
+          },
+          "ErrorCode": {
+            "type": "string",
+            "example": "0"
+          },
+          "Message": {
+            "type": "string",
+            "format": "nullable"
+          }
+        }
+      },
+      "inline_response_200_1": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "inline_response_201": {
+        "type": "object",
+        "properties": {
+          "call_id": {
+            "type": "integer",
+            "example": 23
+          },
+          "doers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/inline_response_201_doers"
+            }
+          },
+          "voice_list": {
+            "type": "string",
+            "example": "/voices/hello.mp3"
+          }
+        }
+      },
+      "inline_response_500": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          }
+        }
+      },
+      "Tinkoff_Items_AgentData": {
+        "type": "object",
+        "properties": {
+          "AgentSign": {
+            "type": "string",
+            "example": "bank_paying_agent"
+          },
+          "OperationName": {
+            "type": "string",
+            "example": "Позиция чека 1"
+          },
+          "Phones": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "823456781012141611"
+            }
+          },
+          "ReceiverPhones": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "923456781012141611"
+            }
+          },
+          "TransferPhones": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "136456781012141611"
+            }
+          },
+          "OperatorName": {
+            "type": "string",
+            "example": "Tinkoff"
+          },
+          "OperatorAddress": {
+            "type": "string",
+            "example": "г. Тольятти"
+          },
+          "OperatorInn": {
+            "type": "string",
+            "example": "7710140679"
+          }
+        }
+      },
+      "Tinkoff_Items_SupplierInfo": {
+        "type": "object",
+        "properties": {
+          "Phones": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "88001007755"
+            }
+          },
+          "Name": {
+            "type": "string",
+            "example": "СПАО Ингосстрах"
+          },
+          "Inn": {
+            "type": "string",
+            "example": "7705042179"
+          }
+        }
+      },
+      "inline_response_201_doers": {
+        "type": "object",
+        "properties": {
+          "doer_phones_id": {
+            "type": "integer",
+            "example": 12
+          },
+          "phonenumber": {
+            "type": "integer",
+            "example": 89999999999
+          }
+        }
+      }
+    },
+    "responses": {
+      "ResTinkoff_Init": {
+        "description": "ответ от init",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Tinkoff_Init_Response"
+            }
+          }
+        }
+      },
+      "ResTinkoffSendClosingReceipt": {
+        "description": "Array of errors",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/inline_response_200"
+            }
+          }
+        }
+      },
+      "respcallnew500": {
+        "description": "Array of errors",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/inline_response_500"
+            },
+            "examples": {
+              "sample1": {
+                "value": {
+                  "code": 1,
+                  "message": "All the performers are talking"
+                }
+              }
+            }
+          }
+        }
+      },
+      "respcallnew201": {
+        "description": "Какое-то описание",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/inline_response_201"
+            }
+          }
+        },
+        "links": {
+          "GetCallId": {
+            "operationId": "CreateNewCallMaked",
+            "parameters": {
+              "call_id": "$response.body#/call_id",
+              "doer_phones_id": "$response.body#/doers[*]/doer_phones_id"
+            }
+          },
+          "UpdCallComplite": {
+            "operationId": "UpdateCallComplite",
+            "parameters": {
+              "call_id": "$response.body#/call_id"
+            }
+          }
+        }
+      },
+      "respcallback": {
+        "description": "Описание",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/inline_response_200_1"
+            }
+          }
+        }
+      }
+    },
+    "requestBodies": {
+      "ReqTinkoffSendClosingReceipt": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "required": [
+                "PaymentId",
+                "Receipt",
+                "TerminalKey",
+                "Token"
+              ],
+              "type": "object",
+              "properties": {
+                "TerminalKey": {
+                  "type": "string",
+                  "example": "TinkoffBankTest"
+                },
+                "PaymentId": {
+                  "type": "string",
+                  "example": "700000105771"
+                },
+                "Receipt": {
+                  "$ref": "#/components/schemas/Tinkoff_Receipt"
+                },
+                "Token": {
+                  "type": "string",
+                  "example": "9e2e9b311e3006be4c2411e294c1b4ff3a71b25b315695a2fb494b6e19fae35c"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ReqTinkoff_Init": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "required": [
+                "PaymentId",
+                "Receipt",
+                "TerminalKey",
+                "Token"
+              ],
+              "type": "object",
+              "properties": {
+                "TerminalKey": {
+                  "maxLength": 20,
+                  "type": "string",
+                  "example": "TinkoffBankTest"
+                },
+                "Amount": {
+                  "maxLength": 10,
+                  "type": "number",
+                  "description": "Сумма в копейках"
+                },
+                "PaymentId": {
+                  "maxLength": 36,
+                  "type": "string",
+                  "example": "700000105771"
+                },
+                "IP": {
+                  "maxLength": 40,
+                  "type": "string",
+                  "description": "IP-адрес покупателя"
+                },
+                "Description": {
+                  "maxLength": 250,
+                  "type": "string",
+                  "description": "Описание заказа"
+                },
+                "Token": {
+                  "type": "string",
+                  "example": "9e2e9b311e3006be4c2411e294c1b4ff3a71b25b315695a2fb494b6e19fae35c"
+                },
+                "Language": {
+                  "maxLength": 2,
+                  "type": "string",
+                  "description": "Язык платежной формы",
+                  "enum": [
+                    "ru",
+                    "en"
+                  ]
+                },
+                "Recurrent": {
+                  "maxLength": 1,
+                  "type": "string",
+                  "description": "Идентификатор родительского платежа, Передается со значением Y"
+                },
+                "CustomerKey": {
+                  "maxLength": 36,
+                  "type": "string",
+                  "description": "Идентификатор покупателя в системе продавца. Передается вместе с параметром CardId. См. метод GetGardList Также необходим для сохранения карт на платежной форме (платежи в один клик)."
+                },
+                "RedirectDueDate": {
+                  "type": "string",
+                  "description": "Cрок жизни ссылки (не более 90 дней) Временная метка по стандарту ISO8601 в формате YYYY-MM-DDThh:mm:ss±hh:mm"
+                },
+                "NotificationURL": {
+                  "type": "string",
+                  "description": "Адрес для получения http нотификаций"
+                },
+                "SuccessURL": {
+                  "type": "string",
+                  "description": "Страница успеха"
+                },
+                "FailURL": {
+                  "type": "string",
+                  "description": "Страница ошибки"
+                },
+                "PayType": {
+                  "type": "string",
+                  "enum": [
+                    "O",
+                    "T"
+                  ]
+                },
+                "Receipt": {
+                  "$ref": "#/components/schemas/Tinkoff_Receipt"
+                },
+                "DATA": {
+                  "type": "array",
+                  "example": {
+                    "Phone": "+71234567890",
+                    "Email": "a@test.com"
+                  },
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "maxLength": 100,
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "reqCallInMaked": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "call_id": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "doer_phones_id": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "states_id": {
+                  "type": "integer",
+                  "example": 1
+                }
+              }
+            }
+          }
+        },
+        "required": true
+      },
+      "reqCallComplite": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "voice_record_path": {
+                  "type": "string",
+                  "example": "/voices/hello.mp3"
+                },
+                "call_id": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "doer_phones_id": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "states_id": {
+                  "type": "integer",
+                  "example": 1
+                }
+              }
+            }
+          }
+        },
+        "required": true
+      },
+      "reqcallnew201": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string",
+                  "example": "mts_in"
+                },
+                "person_phonenumber": {
+                  "type": "string",
+                  "example": "89999999999"
+                },
+                "extension_phonenumber": {
+                  "type": "string",
+                  "example": "89993334455"
+                }
+              }
+            }
+          }
+        }
+      },
+      "reqcallback": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "ordernumber": {
+                  "type": "integer",
+                  "example": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
